@@ -60,7 +60,19 @@ private
     instrument "rails3.run_assets_precompile_rake_task" do
       log("assets_precompile") do
         if File.exists?("public/assets/manifest.yml")
-          puts "Detected manifest.yml, assuming assets were compiled locally"
+          puts "Detected manifest.yml, assuming assets were precompiled locally"
+          asset_sync = rake.task("assets:sync")
+          topic("Synchronizing assets to s3")
+
+          asset_sync.invoke(env: rake_env)
+
+          if asset_sync.success?
+            log "assets_sync", :status => "success"
+            puts "Asset Synchronization completed (#{"%.2f" % asset_sync.time}s)"
+          else
+            puts asset_sync.output
+          end
+
           return true
         end
 
